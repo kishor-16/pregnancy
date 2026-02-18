@@ -1,150 +1,216 @@
 const express = require('express');
 const router = express.Router();
-const { readData, writeData } = require('./dataStore');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const auth = require('./middleware/auth');
+const User = require('./models/User');
+const Post = require('./models/Post');
 
-// Hydration Routes
-router.post('/hydration', (req, res) => {
+// --- Auth Routes ---
+
+// Register
+router.post('/auth/register', async (req, res) => {
+    const { email, password, name } = req.body;
+    try {
+        let user = await User.findOne({ email });
+        if (user) return res.status(400).json({ error: 'User already exists' });
+
+        user = new User({ email, password, profile: { name } });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+
+        await user.save();
+
+        const payload = { user: { id: user.id } };
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
+            if (err) throw err;
+            res.json({ token, user: { id: user.id, email: user.email, name: user.profile.name } });
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Login
+router.post('/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        let user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ error: 'Invalid Credentials' });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ error: 'Invalid Credentials' });
+
+        const payload = { user: { id: user.id } };
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
+            if (err) throw err;
+            res.json({ token, user: { id: user.id, email: user.email, name: user.profile.name, lmp: user.profile.lmp } });
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Get Current User
+router.get('/auth/user', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// --- Health Data Routes ---
+
+// LMP
+router.post('/lmp', auth, async (req, res) => {
+    const { lmp } = req.body;
+    try {
+        const user = await User.findById(req.user.id);
+        user.profile.lmp = lmp;
+        await user.save();
+        res.json({ lmp });
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/lmp', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json({ lmp: user.profile.lmp });
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
+
+// Hydration
+router.post('/hydration', auth, async (req, res) => {
     const { amount } = req.body;
-    if (!amount) return res.status(400).json({ error: 'Amount is required' });
-
-    const data = readData();
-    const entry = {
-        id: Date.now(),
-        amount: parseInt(amount),
-        date: new Date().toISOString().split('T')[0],
-        timestamp: new Date().toISOString()
-    };
-    data.hydration.push(entry);
-    writeData(data);
-    res.status(201).json(entry);
+    try {
+        const user = await User.findById(req.user.id);
+        const entry = {
+            amount: parseInt(amount),
+            date: new Date().toISOString().split('T')[0]
+        };
+        user.hydration.push(entry);
+        await user.save();
+        res.status(201).json(entry);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.get('/hydration/today', (req, res) => {
-    const data = readData();
-    const today = new Date().toISOString().split('T')[0];
-    const todayHydration = data.hydration.filter(h => h.date === today);
-    const total = todayHydration.reduce((sum, h) => sum + h.amount, 0);
-    res.json({ total, entries: todayHydration });
+router.get('/hydration/today', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const today = new Date().toISOString().split('T')[0];
+        const todayEntries = user.hydration.filter(h => h.date === today);
+        const total = todayEntries.reduce((sum, h) => sum + h.amount, 0);
+        res.json({ total, entries: todayEntries });
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.get('/hydration/history', (req, res) => {
-    const data = readData();
-    res.json(data.hydration);
+// Medicine
+router.post('/medicine', auth, async (req, res) => {
+    const { name, dosage, time, endDate } = req.body;
+    try {
+        const user = await User.findById(req.user.id);
+        const medicine = { name, dosage, time, endDate, startDate: new Date() };
+        user.medicines.push(medicine);
+        await user.save();
+        res.status(201).json(medicine);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-// Medicine Routes
-router.post('/medicine', (req, res) => {
-    const { name, dosage, time, startDate, endDate } = req.body;
-    if (!name || !dosage || !time) return res.status(400).json({ error: 'Missing medicine details' });
-
-    const data = readData();
-    const medicine = {
-        id: Date.now(),
-        name,
-        dosage,
-        time,
-        startDate,
-        endDate,
-        takenToday: false
-    };
-    data.medicines.push(medicine);
-    writeData(data);
-    res.status(201).json(medicine);
+router.get('/medicine', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json(user.medicines);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.get('/medicine', (req, res) => {
-    const data = readData();
-    res.json(data.medicines);
+router.put('/medicine/:id', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const med = user.medicines.id(req.params.id);
+        if (!med) return res.status(404).json({ error: 'Medicine not found' });
+
+        Object.assign(med, req.body);
+        await user.save();
+        res.json(med);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.put('/medicine/:id', (req, res) => {
-    const data = readData();
-    const index = data.medicines.findIndex(m => m.id == req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Medicine not found' });
-
-    data.medicines[index] = { ...data.medicines[index], ...req.body };
-    writeData(data);
-    res.json(data.medicines[index]);
-});
-
-router.delete('/medicine/:id', (req, res) => {
-    const data = readData();
-    data.medicines = data.medicines.filter(m => m.id != req.params.id);
-    writeData(data);
-    res.status(204).send();
-});
-
-// Mood Routes
-router.post('/mood', (req, res) => {
+// Mood
+router.post('/mood', auth, async (req, res) => {
     const { mood, notes } = req.body;
-    if (!mood) return res.status(400).json({ error: 'Mood is required' });
-
-    const data = readData();
-    const entry = {
-        id: Date.now(),
-        mood,
-        notes,
-        date: new Date().toISOString().split('T')[0],
-        timestamp: new Date().toISOString()
-    };
-    data.moods.push(entry);
-    writeData(data);
-    res.status(201).json(entry);
+    try {
+        const user = await User.findById(req.user.id);
+        const entry = {
+            mood,
+            notes,
+            date: new Date().toISOString().split('T')[0]
+        };
+        user.moods.push(entry);
+        await user.save();
+        res.status(201).json(entry);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.get('/mood', (req, res) => {
-    const data = readData();
-    res.json(data.moods);
+router.get('/mood', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json(user.moods);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-// Community Routes
-router.post('/posts', (req, res) => {
+// --- Community Routes ---
+
+router.post('/posts', auth, async (req, res) => {
     const { content } = req.body;
-    if (!content) return res.status(400).json({ error: 'Content is required' });
-
-    const data = readData();
-    const post = {
-        id: Date.now(),
-        content,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        comments: []
-    };
-    data.posts.push(post);
-    writeData(data);
-    res.status(201).json(post);
+    try {
+        const user = await User.findById(req.user.id);
+        const newPost = new Post({
+            content,
+            author: user.id,
+            authorName: user.profile.name || user.email.split('@')[0]
+        });
+        const post = await newPost.save();
+        res.status(201).json(post);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.get('/posts', (req, res) => {
-    const data = readData();
-    res.json(data.posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+router.get('/posts', auth, async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ createdAt: -1 });
+        res.json(posts);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
 });
 
-router.put('/posts/:id', (req, res) => {
-    const data = readData();
-    const index = data.posts.findIndex(p => p.id == req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Post not found' });
+// --- Static/Helper Info ---
 
-    data.posts[index] = { ...data.posts[index], ...req.body };
-    writeData(data);
-    res.json(data.posts[index]);
-});
-
-router.delete('/posts/:id', (req, res) => {
-    const data = readData();
-    data.posts = data.posts.filter(p => p.id != req.params.id);
-    writeData(data);
-    res.status(204).send();
-});
-
-// Diet Routes (Static)
-const dietData = {
-    trimester1: ["Folic acid rich foods", "Leafy greens", "Citrus fruits", "Whole grains"],
-    trimester2: ["Calcium rich foods", "Dairy", "Lean protein", "Iron rich foods"],
-    trimester3: ["DHA rich foods", "Nuts and seeds", "Berries", "Avocados"]
-};
-
-// Weekly Info (Growth & Symptoms)
 const weeklyInfoData = {
     1: { growth: "Conception occurs; cells begin to divide.", symptoms: "Fatigue, missed period." },
     4: { growth: "The embryo is about the size of a poppy seed.", symptoms: "Bloating, mood swings." },
@@ -161,65 +227,9 @@ const weeklyInfoData = {
 
 router.get('/weekly-info/:week', (req, res) => {
     const week = parseInt(req.params.week);
-    // Find the closest previous milestone or current
     const milestones = Object.keys(weeklyInfoData).map(Number).sort((a, b) => b - a);
     const closest = milestones.find(m => m <= week) || 1;
     res.json(weeklyInfoData[closest]);
-});
-
-router.get('/diet/:week', (req, res) => {
-    const week = parseInt(req.params.week);
-    let trimester = 'trimester1';
-    if (week > 13 && week <= 26) trimester = 'trimester2';
-    else if (week > 26) trimester = 'trimester3';
-    res.json({ trimester, suggestions: dietData[trimester] });
-});
-
-// LMP Routes
-router.post('/lmp', (req, res) => {
-    const { lmp } = req.body;
-    const data = readData();
-    data.lmp = lmp;
-    writeData(data);
-    res.json({ lmp });
-});
-
-router.get('/lmp', (req, res) => {
-    const data = readData();
-    res.json({ lmp: data.lmp });
-});
-
-router.post('/reset', (req, res) => {
-    const emptyData = {
-        lmp: null,
-        hydration: { total: 0, entries: [] },
-        medicine: [],
-        mood: [],
-        posts: []
-    };
-    fs.writeFileSync(dataFilePath, JSON.stringify(emptyData, null, 2));
-    res.json({ success: true });
-});
-
-// Alerts Routes (In-Memory for simplicity)
-let alerts = [];
-
-router.get('/alerts', (req, res) => {
-    res.json(alerts);
-});
-
-router.post('/alerts', (req, res) => {
-    const { title, message, type } = req.body;
-    const newAlert = {
-        id: Date.now(),
-        title,
-        message,
-        type: type || 'info', // info, warning, success, danger
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    alerts.unshift(newAlert);
-    if (alerts.length > 20) alerts.pop();
-    res.status(201).json(newAlert);
 });
 
 module.exports = router;
