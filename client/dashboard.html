@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Pregnancy Care</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">MamaCare 🌸</div>
+        <ul class="nav-links">
+            <li><a href="#" class="active" onclick="showSection('dashboard')"><i class="fas fa-home"></i>&nbsp;
+                    Dashboard</a></li>
+            <li><a href="#" onclick="showSection('hydration')"><i class="fas fa-tint"></i>&nbsp; Hydration</a></li>
+            <li><a href="#" onclick="showSection('medicine')"><i class="fas fa-pills"></i>&nbsp; Medicines</a></li>
+            <li><a href="#" onclick="showSection('mood')"><i class="fas fa-smile"></i>&nbsp; Mood Tracker</a></li>
+            <li><a href="#" onclick="showSection('diet')"><i class="fas fa-utensils"></i>&nbsp; Diet Plans</a></li>
+            <li><a href="#" onclick="showSection('community')"><i class="fas fa-users"></i>&nbsp; Community</a></li>
+            <li><a href="#" onclick="showSection('alerts')"><i class="fas fa-bell"></i>&nbsp; Alerts <span
+                        id="alertBadge"
+                        style="background: #ef5350; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; display: none;">0</span></a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboardSection">
+            <h1 id="welcomeHeader">Good morning, Mama! ✨</h1>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3 class="card-title">Pregnancy Week</h3>
+                    <h2 id="currentWeekNum" style="font-size: 2.5rem; color: var(--primary-dark);">--</h2>
+                    <p id="eddText">Expected Delivery Date: --</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Hydration Progress</h3>
+                    <div class="progress-container">
+                        <div id="hydrationProgress" class="progress-bar"></div>
+                    </div>
+                    <p id="hydrationStats">0ml / 2500ml</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Medicines Today</h3>
+                    <ul id="medicineMiniList" style="list-style: none;"></ul>
+                    <a href="#" onclick="showSection('medicine')"
+                        style="font-size: 0.9rem; color: var(--primary-dark);">View All</a>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Latest Mood</h3>
+                    <div id="latestMoodDisplay" style="text-align: center; font-size: 1.5rem;">--</div>
+                    <p id="moodSuggestionText" style="font-style: italic; font-size: 0.9rem; margin-top: 10px;"></p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="margin-top: 1.5rem;">
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-baby"></i> Baby's Growth</h3>
+                    <p id="babyGrowthText">Loading weekly update...</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-notes-medical"></i> Common Symptoms</h3>
+                    <p id="weeklySymptomsText">Loading symptoms...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Other sections will be dynamically handled by JS -->
+        <section id="hydrationSection" style="display: none;">
+            <h1 class="card-title">💧 Hydration Tracker</h1>
+            <div class="card">
+                <h3>Log Water Intake</h3>
+                <div class="form-group">
+                    <input type="number" id="waterInMls" placeholder="Amount in ml (e.g. 250)">
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <button onclick="addWaterPreset(50)" class="btn"
+                        style="background: #e1f5fe; padding: 5px 15px;">50ml</button>
+                    <button onclick="addWaterPreset(100)" class="btn"
+                        style="background: #e1f5fe; padding: 5px 15px;">100ml</button>
+                    <button onclick="addWaterPreset(200)" class="btn"
+                        style="background: #e1f5fe; padding: 5px 15px;">200ml</button>
+                    <button onclick="addWaterPreset(500)" class="btn"
+                        style="background: #e1f5fe; padding: 5px 15px;">500ml</button>
+                </div>
+                <button onclick="addWater()" class="btn btn-primary" style="width: 100%;">Add custom amount</button>
+                <div class="progress-container" style="height: 25px; margin-top: 2rem;">
+                    <div id="hydrationProgressLarge" class="progress-bar"></div>
+                </div>
+                <h3 id="hydrationStatsLarge" style="text-align: center; margin-top: 1rem;">0ml / 2500ml</h3>
+            </div>
+        </section>
+
+        <section id="medicineSection" style="display: none;">
+            <h1 class="card-title">💊 Medicine Reminders</h1>
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3>Add New Medicine</h3>
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Name</label><input type="text" id="medName"></div>
+                    <div class="form-group"><label>Dosage</label><input type="text" id="medDosage"></div>
+                    <div class="form-group"><label>Time</label><input type="time" id="medTime"></div>
+                    <div class="form-group"><label>End Date</label><input type="date" id="medEnd"></div>
+                </div>
+                <button onclick="addMedicine()" class="btn btn-primary">Scedule Medicine</button>
+            </div>
+            <div id="medicineListContainer" class="dashboard-grid"></div>
+        </section>
+
+        <section id="moodSection" style="display: none;">
+            <h1 class="card-title">😊 Mood Tracker</h1>
+            <div class="card">
+                <h3>How are you feeling today?</h3>
+                <div class="mood-selector">
+                    <button class="mood-btn" onclick="selectMood('Happy', this)">😊</button>
+                    <button class="mood-btn" onclick="selectMood('Sad', this)">😢</button>
+                    <button class="mood-btn" onclick="selectMood('Irritated', this)">😠</button>
+                    <button class="mood-btn" onclick="selectMood('Anxious', this)">😰</button>
+                    <button class="mood-btn" onclick="selectMood('Tired', this)">😴</button>
+                </div>
+                <textarea id="moodNotes" placeholder="Any thoughts today? (optional)"
+                    style="margin-bottom: 1rem;"></textarea>
+                <button onclick="saveMood()" class="btn btn-primary">Save Mood</button>
+            </div>
+            <div id="moodHistoryList" style="margin-top: 2rem;"></div>
+        </section>
+
+        <section id="dietSection" style="display: none;">
+            <h1 class="card-title">🥗 Trimester-Based Diet Suggestions</h1>
+            <div id="dietContainer" class="card">
+                <p>Calculating your current week...</p>
+            </div>
+        </section>
+
+        <section id="communitySection" style="display: none;">
+            <h1 class="card-title">🌍 Community Page</h1>
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3>Create a Post</h3>
+                <textarea id="postContent" placeholder="Share your experience..."
+                    style="margin-bottom: 1rem;"></textarea>
+                <button onclick="createPost()" class="btn btn-primary">Post</button>
+            </div>
+            <div id="postsContainer"></div>
+        </section>
+
+        <!-- Alerts Section -->
+        <section id="alertsSection" style="display: none;">
+            <h1 class="card-title">🔔 Personal Alerts & Reminders</h1>
+            <div id="alertsContainer">
+                <p style="color: #888;">No new alerts. You're doing great, Mama! ✨</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Celebration Modal -->
+    <div id="celebrationModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="celebration-icon">🏆</div>
+            <h2 id="achievementTitle">Awesome Work!</h2>
+            <p id="achievementMsg">You've reached your goal for today.</p>
+            <button onclick="closeCelebration()" class="btn btn-primary" style="margin-top: 1.5rem;">Yay!
+                Thanks</button>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <a href="#" class="active" onclick="showSection('dashboard')"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="#" onclick="showSection('hydration')"><i class="fas fa-tint"></i><span>Water</span></a>
+        <a href="#" onclick="showSection('medicine')"><i class="fas fa-pills"></i><span>Meds</span></a>
+        <a href="#" onclick="showSection('alerts')"><i class="fas fa-bell"></i><span>Alerts</span></a>
+        <a href="#" onclick="showSection('community')"><i class="fas fa-users"></i><span>Social</span></a>
+    </nav>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

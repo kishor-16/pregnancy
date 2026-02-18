@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Pregnancy Care</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div class="card" style="width: 400px; text-align: center;">
+        <h1 class="card-title" style="font-size: 2rem;">Hello Mama! ✨</h1>
+        <p style="margin-bottom: 2rem;">Let's start your journey. Please enter your Last Menstrual Period (LMP) date.</p>
+        
+        <form id="lmpForm">
+            <div class="form-group">
+                <label for="lmpDate">Last Menstrual Period (LMP)</label>
+                <input type="date" id="lmpDate" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Start My Journey</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('lmpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const lmp = document.getElementById('lmpDate').value;
+            
+            const response = await fetch('/api/lmp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lmp })
+            });
+
+            if (response.ok) {
+                localStorage.setItem('lmp', lmp);
+                window.location.href = '/dashboard.html';
+            }
+        });
+
+        // Check if LMP already exists
+        window.addEventListener('DOMContentLoaded', async () => {
+            const res = await fetch('/api/lmp');
+            const data = await res.json();
+            if (data.lmp) {
+                localStorage.setItem('lmp', data.lmp);
+                window.location.href = '/dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>

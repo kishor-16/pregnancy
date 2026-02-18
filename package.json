@@ -1,0 +1,12 @@
+{
+  "name": "pregnancy-care-app",
+  "version": "1.0.0",
+  "description": "Full-stack pregnancy care web application",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  }
+}

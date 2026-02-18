@@ -1,0 +1,376 @@
+:root {
+    --primary: #ffb7c5;
+    /* Soft Pink */
+    --primary-dark: #ff9aa2;
+    --secondary: #b5ead7;
+    /* Soft Green */
+    --accent: #c7ceea;
+    /* Soft Purple */
+    --bg-color: #fff9fb;
+    --text-color: #4a4a4a;
+    --card-bg: #ffffff;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    --border-radius: 20px;
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.nav-links {
+    list-style: none;
+}
+
+.nav-links li {
+    margin-bottom: 1rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 0.8rem 1.2rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    background-color: var(--primary);
+    color: white;
+    transform: translateX(10px);
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 260px;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* Glassmorphism Cards */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--primary-dark);
+}
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    height: 12px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    width: 0%;
+    transition: width 1s ease-in-out;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    outline: none;
+    transition: var(--transition);
+}
+
+input:focus {
+    border-color: var(--primary);
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: scale(1.02);
+}
+
+/* Mood Icons */
+.mood-selector {
+    display: flex;
+    justify-content: space-around;
+    margin: 1rem 0;
+}
+
+.mood-btn {
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    padding: 0.5rem;
+    transition: var(--transition);
+}
+
+.mood-btn:hover,
+.mood-btn.active {
+    border-color: var(--primary);
+    background: var(--bg-color);
+}
+
+/* Community Section */
+.post {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 0;
+}
+
+.post-content {
+    margin-bottom: 0.5rem;
+}
+
+.post-actions {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+/* celebration Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: white;
+    padding: 3rem;
+    border-radius: 30px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    transform: scale(0.8);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-content.show {
+    transform: scale(1);
+}
+
+.celebration-icon {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* Alert Item Styles */
+.alert-item {
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-left: 5px solid;
+    background: white;
+    box-shadow: var(--shadow);
+}
+
+.alert-info {
+    border-left-color: var(--accent);
+}
+
+.alert-warning {
+    border-left-color: #ffd54f;
+}
+
+.alert-success {
+    border-left-color: var(--secondary);
+}
+
+.alert-danger {
+    border-left-color: #ef5350;
+}
+
+.alert-icon {
+    font-size: 1.2rem;
+}
+
+.alert-time {
+    font-size: 0.8rem;
+    color: #888;
+    margin-left: auto;
+}
+
+/* Mobile Navigation Bar */
+.mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    justify-content: space-around;
+    padding: 0.8rem 0;
+    border-top: 1px solid #eee;
+}
+
+.mobile-nav a {
+    text-decoration: none;
+    color: #888;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.7rem;
+    transition: var(--transition);
+}
+
+.mobile-nav a.active {
+    color: var(--primary-dark);
+}
+
+.mobile-nav i {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
+/* Responsive Refinements */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1rem;
+        padding-bottom: 5rem;
+        /* Space for mobile nav */
+    }
+
+    .mobile-nav {
+        display: flex;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .card {
+        padding: 1rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 2rem 1rem;
+    }
+
+    .celebration-icon {
+        font-size: 3.5rem;
+    }
+}
